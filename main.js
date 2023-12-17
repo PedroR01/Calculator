@@ -1,3 +1,14 @@
+// Max length of the values that the calculator can handle
+const MAX_DIGITS = 8;
+const DIG_OVERFLOW_ERR = "ERR: The operation would exceed the 8 maximum digits allowed.";
+const MAX_DECIMAL_DIGITS = 3; // When has a +1 in a condition, it refers to the "."(dot) added in the string.
+
+// constructor for the operators that the calculator is going to handle. 
+function Operator(value, isDecimal){
+  this.value = value;
+  this.isDecimal = isDecimal;
+}
+
 // All kinds of operations that are supported for this calculator
 const operations = {
   '/': (op1, op2) => op1 / op2,
@@ -8,8 +19,13 @@ const operations = {
 
 // Methods of conversions for the calc values
 const conversions = {
-  '.': (value) => value + ".",
-  '°': (value) => (value * (180 / Math.PI)).toString() + "°"
+  '.': (value) => {
+    if(!value.toString().includes("."))
+      return value + ".";
+    return value;
+  },
+  '°': (value) => (value * (180 / Math.PI)).toString() + "°",
+  '+/-': (value) => value * -1 // AÑADIR ESTA CONVERSION COMO BOTON EN HTML !!!!
 };
 
 function performOperation(op1, op2, operation) {
@@ -28,65 +44,86 @@ function performConversion(value, conversion) {
 }
 
 // Updates the value shown in the calculator output
-function updateDisplay(value) {
-  document.getElementById("output").innerText = value;
+function updateDisplay(operator) {
+  document.getElementById("output").innerText = !operator.isDecimal ? operator.value : Number(operator.value).toFixed(MAX_DECIMAL_DIGITS);
 }
 
-let outNumbers = "0"; // Output numbers
+let currentValue = new Operator(0, false); // Current input digits/value
 let currentOperation = null; // Save the operation to make
-let storedValue = null; // Save the first value/op before the operation
+let storedValue = new Operator(null, false); // Save the first value/op before the operation
 
 function handleNumber(buttonValue) {
-  outNumbers = outNumbers === "0" ? buttonValue : outNumbers + buttonValue;
-  updateDisplay(outNumbers);
+  if(currentValue.value === 0)
+    currentValue.value = buttonValue;
+  else if(currentValue.isDecimal && currentValue.value.toString().length <= (MAX_DIGITS + MAX_DECIMAL_DIGITS))
+    currentValue.value += buttonValue;
+  else if(currentValue.value.toString().length < MAX_DIGITS)
+    currentValue.value += buttonValue;
+  else
+    alert(DIG_OVERFLOW_ERR);
+  updateDisplay(currentValue);
 }
 
 function handleDelete() {
-  if (outNumbers.length > 1) {
-    outNumbers = parseFloat(outNumbers.slice(0, -1)).toString();
+  if (currentValue.value.toString().length > 1) {
+    currentValue.value = parseFloat(currentValue.value.slice(0, -1));
   } else {
     // Show a pop-up or handle the case where the operation is not possible
-    console.log("NAIN");
+    Alert("ERR: Cannot delete an empty string/value.");
   }
-  updateDisplay(outNumbers);
+  updateDisplay(currentValue);
 }
 
 function handleArithmeticOperation(operation) {
-  if (storedValue === null) {
-    storedValue = parseFloat(outNumbers);
-    currentOperation = operation;
-    outNumbers = "0";
-  } else {
-    storedValue = performOperation(storedValue, parseFloat(outNumbers), currentOperation);
-    currentOperation = operation;
-    outNumbers = "0";
+  if (storedValue.value === null) 
+    storedValue = currentValue; // Saves the current value and decimal status entered in another variable so we can access it later
+  else {
+    resLength = performOperation(storedValue.value, currentValue.value, currentOperation).toString().length;
+    if(((storedValue.isDecimal || currentValue.isDecimal) && resLength <= (MAX_DIGITS + MAX_DECIMAL_DIGITS + 1)) || resLength <= MAX_DIGITS){
+      storedValue.value = performOperation(storedValue.value, currentValue.value, currentOperation);
+      updateDisplay(storedValue);
+    }
+    else
+      alert(DIG_OVERFLOW_ERR + " Aritmetic");
   }
+  currentOperation = operation;
+  currentValue.value = 0;
+  currentValue.isDecimal = false;
 }
 
 function handleOperation(operation) {
   if (operation === "=") {
     // Gives the result if the 2 op and the operation were inserted
-    if (currentOperation && storedValue !== null) {
-      const result = performOperation(storedValue, parseFloat(outNumbers), currentOperation);
-      outNumbers = result.toString();
-      updateDisplay(outNumbers);
-      storedValue = null;
-      currentOperation = null;
+    if ((currentOperation.value && storedValue.value) !== null) {
+      const result = performOperation(storedValue.value, currentValue.value, currentOperation);
+      console.log(storedValue.isDecimal);
+      console.log(currentValue.isDecimal);
+      console.log(result <= (MAX_DIGITS + MAX_DECIMAL_DIGITS + 1));
+      if(((storedValue.isDecimal || currentValue.isDecimal) && result <= (MAX_DIGITS + MAX_DECIMAL_DIGITS + 1)) || result.toString().length <= MAX_DIGITS){
+        currentValue.value = result;
+        updateDisplay(currentValue);
+        storedValue.value = null;
+        currentOperation = null;
+      }
+      else
+        alert(DIG_OVERFLOW_ERR);
     }
   } else if (operation === "AC") {
     // Clear everything
-    outNumbers = "0";
-    storedValue = null;
+    currentValue.value = 0;
+    storedValue.value = null;
     currentOperation = null;
-    updateDisplay(outNumbers);
+    updateDisplay(currentValue);
   } else if (operation === "C") {
     // Deletes/Clear the last digit
     handleDelete();
   } else if (operation === "." || operation === "°") {
     // Convert and show the number converted
-    outNumbers = performConversion(outNumbers, operation);
-    updateDisplay(outNumbers);
+    currentValue.value = performConversion(currentValue.value, operation);
+    currentValue.isDecimal = true;
+    updateDisplay(currentValue);
   } else {
+    // Handles the operation received according to the previous value that was entered
     handleArithmeticOperation(operation);
   }
 }
