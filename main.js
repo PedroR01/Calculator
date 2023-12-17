@@ -45,7 +45,7 @@ function performConversion(value, conversion) {
 
 // Updates the value shown in the calculator output
 function updateDisplay(operator) {
-  document.getElementById("output").innerText = !operator.isDecimal ? operator.value : Number(operator.value).toFixed(MAX_DECIMAL_DIGITS);
+  document.getElementById("output").innerText = !operator.isDecimal ? Number(operator.value) : Number(operator.value).toFixed(MAX_DECIMAL_DIGITS);
 }
 
 let currentValue = new Operator(0, false); // Current input digits/value
@@ -75,17 +75,27 @@ function handleDelete() {
 }
 
 function handleArithmeticOperation(operation) {
-  if (storedValue.value === null) 
-    storedValue = currentValue; // Saves the current value and decimal status entered in another variable so we can access it later
+  if (storedValue.value === null) {
+    storedValue.value = currentValue.value; // Saves the current value and decimal status entered in another variable so we can access it later
+    storedValue.isDecimal = currentValue.isDecimal;
+  }
   else {
     resLength = performOperation(storedValue.value, currentValue.value, currentOperation).toString().length;
-    if(((storedValue.isDecimal || currentValue.isDecimal) && resLength <= (MAX_DIGITS + MAX_DECIMAL_DIGITS + 1)) || resLength <= MAX_DIGITS){
+    if (((storedValue.isDecimal || currentValue.isDecimal) && resLength <= (MAX_DIGITS + MAX_DECIMAL_DIGITS + 1)) || resLength <= MAX_DIGITS) {
       storedValue.value = performOperation(storedValue.value, currentValue.value, currentOperation);
       updateDisplay(storedValue);
+    } else {
+      alert(DIG_OVERFLOW_ERR + " Arithmetic");
+      // Reset values after an overflow
+      storedValue.value = null;
+      currentOperation = null;
+      currentValue.value = 0;
+      currentValue.isDecimal = false;
+      return;
     }
-    else
-      alert(DIG_OVERFLOW_ERR + " Aritmetic");
   }
+  console.log(storedValue);
+
   currentOperation = operation;
   currentValue.value = 0;
   currentValue.isDecimal = false;
@@ -94,19 +104,26 @@ function handleArithmeticOperation(operation) {
 function handleOperation(operation) {
   if (operation === "=") {
     // Gives the result if the 2 op and the operation were inserted
-    if ((currentOperation.value && storedValue.value) !== null) {
+    if ((currentOperation && storedValue.value) !== null) {
+      console.log(storedValue);
+      console.log(currentValue);
       const result = performOperation(storedValue.value, currentValue.value, currentOperation);
-      console.log(storedValue.isDecimal);
-      console.log(currentValue.isDecimal);
-      console.log(result <= (MAX_DIGITS + MAX_DECIMAL_DIGITS + 1));
-      if(((storedValue.isDecimal || currentValue.isDecimal) && result <= (MAX_DIGITS + MAX_DECIMAL_DIGITS + 1)) || result.toString().length <= MAX_DIGITS){
+      console.log(result);
+      if (((storedValue.isDecimal || currentValue.isDecimal) && result <= (MAX_DIGITS + MAX_DECIMAL_DIGITS + 1)) || result.toString().length <= MAX_DIGITS) {
         currentValue.value = result;
         updateDisplay(currentValue);
+        storedValue.value = currentValue.value;
+        storedValue.isDecimal = currentValue.isDecimal;
+        currentValue.value = 0;
+        currentOperation = null;
+      } else {
+        alert(DIG_OVERFLOW_ERR);
+        // Reset values after an overflow
         storedValue.value = null;
         currentOperation = null;
+        currentValue.value = 0;
+        currentValue.isDecimal = false;
       }
-      else
-        alert(DIG_OVERFLOW_ERR);
     }
   } else if (operation === "AC") {
     // Clear everything
