@@ -24,7 +24,7 @@ const conversions = {
       return value + ".";
     return value;
   },
-  '°': (value) => (value * (180 / Math.PI)) + "°",
+  '°': (value) => (value * (180 / Math.PI)),
   'sign': (value) => value * -1 // +/-
 };
 
@@ -46,12 +46,7 @@ function performConversion(value, conversion) {
 
 // Updates the value shown in the calculator output
 function updateDisplay(number) {
-  //document.getElementById("output").innerText = !number.isDecimal ? Number(number.value) : Number(number.value).toFixed(MAX_DECIMAL_DIGITS);
   let txt = Number(number.value);
-  if(txt === NaN){ // ERROR AL INTENTAR MOSTRAR UN NUMERO TRANSFORMADO A RADIANES Y FALTARIA PODER HACERLO VOLVER A DECIMAL -- TO FIX
-    txt = Number(txt.toString().slice(0, -1));
-    console.log("KK");
-  }
   document.getElementById("output").innerText = txt;
 }
 
@@ -100,15 +95,13 @@ function handleArithmeticOperation(operation) {
       storedValue.value = result;
       updateDisplay(storedValue);
     } else {
-      alert(DIG_OVERFLOW_ERR + " Arithmetic");
+      alert(DIG_OVERFLOW_ERR);
       // Reset values after an overflow
       reset();
       updateDisplay(currentValue);
       return;
     }
   }
-  console.log(storedValue);
-
   currentOperation = operation;
   currentValue.value = 0;
   currentValue.isDecimal = false;
@@ -118,10 +111,8 @@ function handleOperation(operation) {
   if (operation === "=") {
     // Gives the result if the 2 op and the operation were inserted
     if ((currentOperation && storedValue.value) !== null) {
-      console.log(storedValue);
-      console.log(currentValue);
       const result = performOperation(parseFloat(storedValue.value), parseFloat(currentValue.value), currentOperation).toFixed(MAX_DECIMAL_DIGITS);
-      console.log(result);
+    
       if (((storedValue.isDecimal || currentValue.isDecimal) && result.toString().length <= (MAX_DIGITS + MAX_DECIMAL_DIGITS + 1)) || result.toString().length <= MAX_DIGITS) {
         currentValue.value = result;
         updateDisplay(currentValue);
@@ -145,7 +136,7 @@ function handleOperation(operation) {
     handleDelete();
   } else if (operation === "." || operation === "°" || operation === "sign") {
     // Convert and show the number converted
-    currentValue.value = performConversion(parseFloat(currentValue.value), operation);
+    currentValue.value = performConversion(parseFloat(currentValue.value), operation).toFixed(MAX_DECIMAL_DIGITS);
     if(operation != "sign")
       currentValue.isDecimal = true;
     updateDisplay(currentValue);
