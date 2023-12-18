@@ -24,9 +24,10 @@ const conversions = {
       return value + ".";
     return value;
   },
-  '°': (value) => (value * (180 / Math.PI)).toString() + "°",
-  '+/-': (value) => value * -1 // AÑADIR ESTA CONVERSION COMO BOTON EN HTML !!!!
+  '°': (value) => (value * (180 / Math.PI)) + "°",
+  'sign': (value) => value * -1 // +/-
 };
+
 
 function performOperation(op1, op2, operation) {
   // Detects if the operation exist in the operations object
@@ -44,20 +45,32 @@ function performConversion(value, conversion) {
 }
 
 // Updates the value shown in the calculator output
-function updateDisplay(operator) {
-  document.getElementById("output").innerText = !operator.isDecimal ? Number(operator.value) : Number(operator.value).toFixed(MAX_DECIMAL_DIGITS);
+function updateDisplay(number) {
+  //document.getElementById("output").innerText = !number.isDecimal ? Number(number.value) : Number(number.value).toFixed(MAX_DECIMAL_DIGITS);
+  let txt = Number(number.value);
+  if(txt === NaN){ // ERROR AL INTENTAR MOSTRAR UN NUMERO TRANSFORMADO A RADIANES Y FALTARIA PODER HACERLO VOLVER A DECIMAL -- TO FIX
+    txt = Number(txt.toString().slice(0, -1));
+    console.log("KK");
+  }
+  document.getElementById("output").innerText = txt;
 }
 
 let currentValue = new Operator(0, false); // Current input digits/value
 let currentOperation = null; // Save the operation to make
 let storedValue = new Operator(null, false); // Save the first value/op before the operation
 
+function reset(){
+  storedValue.value = null;
+  storedValue.isDecimal = false;
+  currentOperation = null;
+  currentValue.value = 0;
+  currentValue.isDecimal = false;
+}
+
 function handleNumber(buttonValue) {
   if(currentValue.value === 0)
     currentValue.value = buttonValue;
-  else if(currentValue.isDecimal && currentValue.value.toString().length <= (MAX_DIGITS + MAX_DECIMAL_DIGITS))
-    currentValue.value += buttonValue;
-  else if(currentValue.value.toString().length < MAX_DIGITS)
+  else if((currentValue.isDecimal && currentValue.value.toString().length <= (MAX_DIGITS + MAX_DECIMAL_DIGITS)) || currentValue.value.toString().length < MAX_DIGITS)
     currentValue.value += buttonValue;
   else
     alert(DIG_OVERFLOW_ERR);
@@ -65,11 +78,13 @@ function handleNumber(buttonValue) {
 }
 
 function handleDelete() {
-  if (currentValue.value.toString().length > 1) {
-    currentValue.value = parseFloat(currentValue.value.slice(0, -1));
-  } else {
+  if (currentValue.value.toString().length > 1) 
+    currentValue.value = currentValue.value.slice(0, -1);
+  else if(currentValue.value.toString().length = 1) 
+    currentValue.value = 0;
+  else {
     // Show a pop-up or handle the case where the operation is not possible
-    Alert("ERR: Cannot delete an empty string/value.");
+    alert("ERR: Cannot delete an empty string/value.");
   }
   updateDisplay(currentValue);
 }
@@ -80,17 +95,15 @@ function handleArithmeticOperation(operation) {
     storedValue.isDecimal = currentValue.isDecimal;
   }
   else {
-    resLength = performOperation(storedValue.value, currentValue.value, currentOperation).toString().length;
-    if (((storedValue.isDecimal || currentValue.isDecimal) && resLength <= (MAX_DIGITS + MAX_DECIMAL_DIGITS + 1)) || resLength <= MAX_DIGITS) {
-      storedValue.value = performOperation(storedValue.value, currentValue.value, currentOperation);
+    result = performOperation(parseFloat(storedValue.value), parseFloat(currentValue.value), currentOperation).toFixed(MAX_DECIMAL_DIGITS);
+    if (((storedValue.isDecimal || currentValue.isDecimal) && result.toString().length <= (MAX_DIGITS + MAX_DECIMAL_DIGITS + 1)) || result.toString().length <= MAX_DIGITS) {
+      storedValue.value = result;
       updateDisplay(storedValue);
     } else {
       alert(DIG_OVERFLOW_ERR + " Arithmetic");
       // Reset values after an overflow
-      storedValue.value = null;
-      currentOperation = null;
-      currentValue.value = 0;
-      currentValue.isDecimal = false;
+      reset();
+      updateDisplay(currentValue);
       return;
     }
   }
@@ -107,9 +120,9 @@ function handleOperation(operation) {
     if ((currentOperation && storedValue.value) !== null) {
       console.log(storedValue);
       console.log(currentValue);
-      const result = performOperation(storedValue.value, currentValue.value, currentOperation);
+      const result = performOperation(parseFloat(storedValue.value), parseFloat(currentValue.value), currentOperation).toFixed(MAX_DECIMAL_DIGITS);
       console.log(result);
-      if (((storedValue.isDecimal || currentValue.isDecimal) && result <= (MAX_DIGITS + MAX_DECIMAL_DIGITS + 1)) || result.toString().length <= MAX_DIGITS) {
+      if (((storedValue.isDecimal || currentValue.isDecimal) && result.toString().length <= (MAX_DIGITS + MAX_DECIMAL_DIGITS + 1)) || result.toString().length <= MAX_DIGITS) {
         currentValue.value = result;
         updateDisplay(currentValue);
         storedValue.value = currentValue.value;
@@ -119,25 +132,22 @@ function handleOperation(operation) {
       } else {
         alert(DIG_OVERFLOW_ERR);
         // Reset values after an overflow
-        storedValue.value = null;
-        currentOperation = null;
-        currentValue.value = 0;
-        currentValue.isDecimal = false;
+        reset();
+        updateDisplay(currentValue);
       }
     }
   } else if (operation === "AC") {
     // Clear everything
-    currentValue.value = 0;
-    storedValue.value = null;
-    currentOperation = null;
+    reset();
     updateDisplay(currentValue);
   } else if (operation === "C") {
     // Deletes/Clear the last digit
     handleDelete();
-  } else if (operation === "." || operation === "°") {
+  } else if (operation === "." || operation === "°" || operation === "sign") {
     // Convert and show the number converted
-    currentValue.value = performConversion(currentValue.value, operation);
-    currentValue.isDecimal = true;
+    currentValue.value = performConversion(parseFloat(currentValue.value), operation);
+    if(operation != "sign")
+      currentValue.isDecimal = true;
     updateDisplay(currentValue);
   } else {
     // Handles the operation received according to the previous value that was entered
