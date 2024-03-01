@@ -1,12 +1,11 @@
 import './outputScreen.css'
-export default function OutputScreen ({value, operation}){
-    let result = "0";
-    let currentValue = "0";
+export default function OutputScreen (){
+    let result = 0;
     
-    if(operation === "" || operation === "=")
+    /*if(operation === "" || operation === "=")
         currentValue = value.firstValue.toString();
     else
-        currentValue = value.firstValue.toString() + operation.lastOperation + value.secondValue.toString();
+        currentValue = value.firstValue.toString() + operation.lastOperation + value.secondValue.toString();*/
 
     //Necesito obtener el valor que se va ingresando
     //Escribir todo lo que se vaya recibiendo y que no sea nulo
@@ -17,7 +16,7 @@ export default function OutputScreen ({value, operation}){
     return(
         <div className="row out-screen">
             <output className="text-end fs-6 result">{result}</output>
-            <output className="text-end fs-4 fw-bold">{currentValue}</output>
+            <output className="text-end fs-4 fw-bold">{result}</output>
         </div>
     )
 };
