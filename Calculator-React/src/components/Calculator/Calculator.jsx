@@ -7,7 +7,8 @@ import OperationButton from "../OperationButton/OperationButton";
 // Calculator box
 function Calculator() {
   const defaultValue = [{ number: "0", operation: null }];
-  const [nValue, setValue] = useState(defaultValue);
+  const [allOperations, setAllOperations] = useState(defaultValue);
+  const [currentNumber, setCurrentNumber] = useState("");
 
   // ---
   return (
@@ -16,13 +17,19 @@ function Calculator() {
 
       <div className="row justify-content-center">
         <div className="calculator base card col-md-6">
-          {/* // Output */}
-          <OutputScreen
-           
-          />
+          <MyContext.Provider
+            value={{
+              allOperations,
+              setAllOperations,
+              currentNumber,
+              setCurrentNumber,
+            }}
+          >
+            {/* // Output */}
+            <OutputScreen />
 
-          {/* // Seccion de los botones */}
-          <MyContext.Provider value={{ nValue, setValue }}>
+            {/* // Seccion de los botones */}
+
             {/* //Botones */}
             <div className="row">
               <OperationButton btnValue="AC" />

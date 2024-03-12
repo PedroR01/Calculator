@@ -1,22 +1,17 @@
-import './outputScreen.css'
-export default function OutputScreen (){
-    let result = 0;
-    
-    /*if(operation === "" || operation === "=")
-        currentValue = value.firstValue.toString();
-    else
-        currentValue = value.firstValue.toString() + operation.lastOperation + value.secondValue.toString();*/
+import { useContext } from "react";
+import { MyContext } from "../../Context";
+import "./outputScreen.css";
 
-    //Necesito obtener el valor que se va ingresando
-    //Escribir todo lo que se vaya recibiendo y que no sea nulo
-    //Las operaciones se realizan unicamente en calculator
+export default function OutputScreen() {
+  const { allOperations, currentNumber } = useContext(MyContext);
+  let result = 0;
+  let currentOutput = currentNumber === "" ? "0" : currentNumber;
+  // Decidir cuando mostrar el currentNumber o el allOperations a traves de los cambios en el currentOutput.
 
-    //¿Para mostrar el estimativo del resultado conviene calcularlo aca o pasarlo como otro parametro?
-   
-    return(
-        <div className="row out-screen">
-            <output className="text-end fs-6 result">{result}</output>
-            <output className="text-end fs-4 fw-bold">{result}</output>
-        </div>
-    )
-};
+  return (
+    <div className="row out-screen">
+      <output className="text-end fs-6 result">{result}</output>
+      <output className="text-end fs-4 fw-bold">{currentOutput}</output>
+    </div>
+  );
+}
